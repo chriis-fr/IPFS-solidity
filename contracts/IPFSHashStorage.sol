@@ -1,34 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
-contract Lock {
-    uint public unlockTime;
-    address payable public owner;
-
-    event Withdrawal(uint amount, uint when);
-
-    constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
-
-        unlockTime = _unlockTime;
-        owner = payable(msg.sender);
+contract IPFShashStorage {
+    struct File {
+        string fileName;
+        string ipfsHash;
     }
 
-    function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+    mapping (string => File) private files;
 
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+    function upload(string memory fileName, string memory ipfsHash)  public {
+        require(bytes(files[fileName].ipfsHash).length == 0, "File already exists");
+        files[fileName] = File(fileName, ipfsHash);
+    }
 
-        emit Withdrawal(address(this).balance, block.timestamp);
+    function getIPFSHash(string memory fileName) public view returns (string memory) {
+        require(bytes(files[fileName].ipfsHash).length > 0, "File not found");
+        return files[fileName].ipfsHash;
+    }
 
-        owner.transfer(address(this).balance);
+    function isFileStored(string memory fileName) public view returns(bool) {
+        return bytes(files[fileName].ipfsHash).length > 0;
     }
 }
